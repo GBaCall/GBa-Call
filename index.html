@@ -14,39 +14,45 @@
             display: flex; flex-direction: column; justify-content: flex-end;
             height: 100vh; overflow: hidden; font-family: sans-serif;
         }
-        /* 容器 80% 高度 */
+        /* 1. 讓容器可以根據內容自動伸展，不要死鎖在 80vh */
         .app-container {
-            width: 100%; height: 80vh;
+            width: 100%; 
+            min-height: 85vh; /* 改用 min-height，確保內容多時可以長高 */
             background-color: #f8f9fa;
             border-radius: 24px 24px 0 0;
             display: flex; flex-direction: column;
             box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+            padding-bottom: 20px; /* 增加底部留白，避免貼齊邊緣 */
         }
-        /* 標題區：縮小標題關鍵在這裡 */
+
+        /* 2. 標題放大後，微調佔比 */
         .header-section {
-            flex: 2; /* 從 2.5 調小到 1.8，讓出高度 */
+            flex: 0 0 auto; /* 不參加分配，由內容決定高度 */
             display: flex; justify-content: center; align-items: center;
-            padding: 20px 0 0 0; /* 縮減間距 */
+            padding: 30px 0 10px 0; 
         }
+
         .header-section lottie-player {
-            width: 60%; /* 直接控制標題寬度為 45%，它就不會佔滿整個畫面 */
+            width: 65%; /* 標題維持你覺得剛好的 65% */
             height: auto;
-            aspect-ratio: 1 / 1; /* 它是正方形 */
+            aspect-ratio: 1 / 1;
         }
-        /* 紅包網格區 (配合你新改的 300x540) */
+
+        /* 3. 紅包網格區：解決切掉的關鍵 */
         .grid-section {
-            flex: 7.8; /* 給紅包區更多空間 */
+            flex: 1; /* 自動填滿剩餘空間 */
             display: flex; flex-wrap: wrap;
-            justify-content: space-around; 
-            align-content: flex-start;             
-            padding: 10px;
-            gap: 10px; /* 使用 gap 來控制紅包之間的距離，更直觀 */
+            justify-content: space-evenly; 
+            align-content: flex-start; /* 讓紅包從頂部開始排，確保底部不被擠壓 */
+            padding: 0 15px;
         }
+
         .envelope-box {
-            width: 29%; /* 稍微縮小寬度，增加左右間隔 */
-            aspect-ratio: 300 / 540; /* 【重要】請確認跟你的畫布尺寸一致 */
-            margin-bottom: 10px; /* 縮小上下間距，解決你說間隔太大的問題 */
+            width: 29%; 
+            aspect-ratio: 300 / 540; /* 確保與 Glaxnimate 的 540 高度同步 */
+            margin-bottom: 25px; /* 增加紅包之間的上下間距，視覺更舒服 */
             cursor: pointer;
+            overflow: visible; /* 確保動畫超出一點點也不會被切掉 */
         }
         .envelope-box lottie-player {
             width: 100%; height: 100%;
