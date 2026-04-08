@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>紅包抽獎</title>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+        body {
+            margin: 0; padding: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex; flex-direction: column; justify-content: flex-end;
+            height: 100vh; overflow: hidden; font-family: sans-serif;
+        }
+        /* 容器 80% 高度 */
+        .app-container {
+            width: 100%; height: 80vh;
+            background-color: #f8f9fa;
+            border-radius: 24px 24px 0 0;
+            display: flex; flex-direction: column;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+        }
+        /* 標題區 (512x512 正方形) - 給予較小的比例避免壓迫紅包 */
+        .header-section {
+            flex: 3; /* 佔比調小 */
+            display: flex; justify-content: center; align-items: center;
+            padding: 15px 0 5px 0;
+        }
+        .header-section lottie-player {
+            width: auto; height: 90%; /* 高度優先，寬度隨比例縮放 */
+            aspect-ratio: 1 / 1;
+        }
+        /* 紅包網格區 (300x600 瘦長形) */
+        .grid-section {
+            flex: 7; /* 佔比調大，給紅包伸展空間 */
+            display: flex; flex-wrap: wrap;
+            justify-content: space-evenly; align-content: center;
+            padding: 5px 10px 20px 10px;
+        }
+        .envelope-box {
+            width: 28%; /* 橫向 3 格 */
+            aspect-ratio: 300 / 600; /* 1:2 比例 */
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .envelope-box lottie-player {
+            width: 100%; height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header-section">
+        <lottie-player src="GBaCall.lot" speed="1" loop autoplay></lottie-player>
+    </div>
+
+    <div class="grid-section">
+        <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
+        <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
+        <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
+        <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
+        <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
+        <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const prize = urlParams.get('prize') || 'sorry';
+    
+    const prizeFiles = {
+        '25': '25.lot', '20': '20.lot', '15': '15.lot',
+        '10': '10.lot', '5': '5.lot', 'sorry': 'sorry.lot'
+    };
+
+    document.querySelectorAll('.p-anim').forEach(player => {
+        player.load(prizeFiles[prize]);
+    });
+
+    let hasOpened = false;
+    function openPacket(el) {
+        if (hasOpened) return;
+        hasOpened = true;
+        const player = el.querySelector('.p-anim');
+        player.play();
+        
+        // 播完後自動關閉，時間可根據你的動畫長度微調
+        setTimeout(() => { tg.close(); }, 3500);
+    }
+</script>
+</body>
+</html>
