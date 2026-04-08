@@ -29,22 +29,22 @@
             padding: 10px 0 0 0; /* 縮減間距 */
         }
         .header-section lottie-player {
-            width: 45%; /* 直接控制標題寬度為 45%，它就不會佔滿整個畫面 */
+            width: 40%; /* 直接控制標題寬度為 45%，它就不會佔滿整個畫面 */
             height: auto;
             aspect-ratio: 1 / 1; /* 它是正方形 */
         }
         /* 紅包網格區 (配合你新改的 300x540) */
         .grid-section {
-            flex: 8.2; /* 給紅包區更多空間 */
+            flex: 8; /* 給紅包區更多空間 */
             display: flex; flex-wrap: wrap;
-            justify-content: space-evenly; 
-            align-content: flex-start; /* 讓紅包往上擠，不要散開 */
-            padding: 5px 10px;
+            justify-content: center;             
+            padding: 10px;
+            gap: 10px; /* 使用 gap 來控制紅包之間的距離，更直觀 */
         }
         .envelope-box {
-            width: 25%; /* 稍微縮小寬度，增加左右間隔 */
+            width: 28%; /* 稍微縮小寬度，增加左右間隔 */
             aspect-ratio: 300 / 540; /* 【重要】請確認跟你的畫布尺寸一致 */
-            margin-bottom: 2px; /* 縮小上下間距，解決你說間隔太大的問題 */
+            margin-bottom: 10px; /* 縮小上下間距，解決你說間隔太大的問題 */
             cursor: pointer;
         }
         .envelope-box lottie-player {
