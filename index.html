@@ -78,6 +78,8 @@
 
 <script>
     const tg = window.Telegram.WebApp;
+    const openSound = new Audio('press.mp3');
+    openSound.preload = 'auto'; // 告訴瀏覽器先載好音效
     tg.ready();
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -96,6 +98,7 @@
     function openPacket(el) {
         if (hasOpened) return;
         hasOpened = true;
+        openSound.play().catch(e => console.log("音效播放失敗:", e));
         const player = el.querySelector('.p-anim');
         player.play();
         
