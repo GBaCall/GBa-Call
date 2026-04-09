@@ -10,63 +10,53 @@
     <style>
         body {
             margin: 0; padding: 0;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex; flex-direction: column;
-            /* 讓內容貼在最下面，達成 80% 彈出感 */
-            justify-content: flex-end; 
+            background: transparent; /* 讓背景透明才能看到 Telegram */
             height: 100vh; overflow: hidden; font-family: sans-serif;
+            display: flex; flex-direction: column; justify-content: flex-end;
         }
 
         .app-container {
             width: 100%; 
-            height: 80vh; /* 嚴格限制 80% 高度 */
+            height: 80vh; /* 鎖定 80% 高度 */
             background-color: #f8f9fa;
             border-radius: 24px 24px 0 0;
             display: flex; flex-direction: column;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
-            overflow: hidden;
+            overflow: hidden; /* 禁止整頁滑動 */
         }
 
-        /* 1. 頂部計時器：作為標題欄 */
+        /* 1. 頂部倒數條：固定高度 */
         #timer-display {
-            flex: 0 0 auto;
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: #fffde7; 
-            border-bottom: 2px solid #fbc02d; 
-            padding: 12px 15px;
-            z-index: 10;
+            height: 8vh; /* 佔總高度的 8% */
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #fffde7; border-bottom: 2px solid #fbc02d; 
+            padding: 0 20px; flex-shrink: 0;
         }
 
-        /* 2. 標題區：縮小一點，避免垂直空間不足 */
+        /* 2. 標題區：固定高度 */
         .header-section {
-            flex: 0 0 auto;
+            height: 22vh; /* 佔總高度的 22% */
             display: flex; justify-content: center; align-items: center;
-            padding: 10px 0 5px 0; 
+            flex-shrink: 0;
         }
 
         .header-section lottie-player {
-            width: 55%; /* 稍微縮小標題比例 */
-            height: auto;
-            aspect-ratio: 1 / 1;
+            height: 90%; width: auto; /* 以高度為基準縮放 */
         }
 
-        /* 3. 紅包網格區：佔滿剩餘空間並可滾動 */
+        /* 3. 紅包網格區：自動計算剩餘高度 */
         .grid-section {
-            flex: 1; 
+            height: 50vh; /* 佔總高度的 50% (8+22+50=80) */
             display: flex; flex-wrap: wrap;
             justify-content: space-evenly; 
-            align-content: flex-start;
-            padding: 5px 15px 20px 15px;
-            overflow-y: auto; /* 若螢幕太小可滾動 */
+            align-content: space-around; /* 讓紅包垂直均分空間 */
+            padding: 5px 10px;
+            box-sizing: border-box;
         }
 
         .envelope-box {
-            width: 29%; 
-            aspect-ratio: 300 / 540;
-            margin-bottom: 15px;
-            cursor: pointer;
+            width: 28%; 
+            height: 45%; /* 兩排紅包，每排佔接近一半的高度 */
+            display: flex; justify-content: center; align-items: center;
         }
 
         .envelope-box lottie-player {
@@ -78,20 +68,10 @@
 
 <div class="app-container">
     <div id="timer-display">
-        <div style="color: red; font-weight: bold; font-size: 0.95rem;">
-            剩餘時間：<span id="time">10:00</span>
+        <div style="color: red; font-weight: bold; font-size: 0.9rem;">
+            剩餘：<span id="time">10:00</span>
         </div>
-    
-        <button onclick="manualClose()" style="
-            padding: 5px 12px; 
-            border-radius: 20px; 
-            border: 1px solid #fbc02d; 
-            background: #fff; 
-            color: #d32f2f; 
-            font-size: 0.75rem; 
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        ">
+        <button onclick="manualClose()" style="padding: 5px 12px; border-radius: 20px; border: 1px solid #fbc02d; background: #fff; color: #d32f2f; font-size: 0.75rem; font-weight: bold;">
             離開
         </button>
     </div>
@@ -113,61 +93,43 @@
 <script>
     const tg = window.Telegram.WebApp;    
     tg.ready();
-    tg.expand();
+    // 注意：這裡絕對不能寫 tg.expand(); 否則 20% 會變黑塊
     tg.enableClosingConfirmation();
 
-    // 音效
     const openSound = new Audio('press.mp3');
     openSound.preload = 'auto';
     
-    // 參數處理
     const urlParams = new URLSearchParams(window.location.search);
     const prize = urlParams.get('startapp') || urlParams.get('prize') || 'sorry'; 
-    
-    const prizeFiles = {
-        '25': '25.lot', '20': '20.lot', '15': '15.lot',
-        '10': '10.lot', '5': '5.lot', 'sorry': 'sorry.lot'
-    };
+    const prizeFiles = { '25':'25.lot', '20':'20.lot', '15':'15.lot', '10':'10.lot', '5':'5.lot', 'sorry':'sorry.lot' };
 
     document.querySelectorAll('.p-anim').forEach(player => {
         player.load(prizeFiles[prize]);
     });
 
     let hasOpened = false;
-
     function openPacket(el) {
         if (hasOpened) return;
         hasOpened = true;
-        openSound.play().catch(e => console.log("音效播放失敗:", e));
+        openSound.play().catch(e => console.log(e));
         const player = el.querySelector('.p-anim');
         player.play();
     }
 
     function manualClose() {
-        if (confirm("確定已核銷並離開嗎？")) {
-            tg.close();
-        }
+        if (confirm("確定已核銷並離開嗎？")) { tg.close(); }
     }
 
     function startCountdown(duration) {
         const display = document.querySelector('#time');
-        let timer = duration, minutes, seconds;
+        let timer = duration;
         const interval = setInterval(function () {
-            minutes = parseInt(timer / 60, 10);
-            seconds = parseInt(timer % 60, 10);
-            minutes = minutes < 10 ? "0" + minutes : minutes;
-            seconds = seconds < 10 ? "0" + seconds : seconds;
-            display.textContent = minutes + ":" + seconds;
-
-            if (--timer < 0) {
-                clearInterval(interval);
-                display.textContent = "已失效";
-                tg.close();
-            }
+            let min = parseInt(timer / 60, 10);
+            let sec = parseInt(timer % 60, 10);
+            display.textContent = (min < 10 ? "0" + min : min) + ":" + (sec < 10 ? "0" + sec : sec);
+            if (--timer < 0) { clearInterval(interval); tg.close(); }
         }, 1000);
     }
-
-    // 啟動倒數
     startCountdown(600);
 </script>
 </body>
