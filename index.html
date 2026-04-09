@@ -11,51 +11,65 @@
         body {
             margin: 0; padding: 0;
             background-color: rgba(0, 0, 0, 0.6);
-            display: flex; flex-direction: column; justify-content: flex-end;
+            display: flex; flex-direction: column;
+            /* 改為 center，防止內容被推到底部消失 */
+            justify-content: center; 
             height: 100vh; overflow: hidden; font-family: sans-serif;
         }
-        /* 1. 讓容器可以根據內容自動伸展，不要死鎖在 80vh */
+
         .app-container {
             width: 100%; 
-            min-height: 85vh; /* 改用 min-height，確保內容多時可以長高 */
+            height: 100vh; /* 佔滿全螢幕 */
             background-color: #f8f9fa;
             border-radius: 24px 24px 0 0;
             display: flex; flex-direction: column;
             box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
-            padding-bottom: 20px; /* 增加底部留白，避免貼齊邊緣 */
         }
 
-        /* 2. 標題放大後，微調佔比 */
         .header-section {
-            flex: 0 0 auto; /* 不參加分配，由內容決定高度 */
+            flex: 0 0 auto;
             display: flex; justify-content: center; align-items: center;
-            padding: 30px 0 10px 0; 
+            padding: 20px 0 5px 0; 
         }
 
         .header-section lottie-player {
-            width: 65%; /* 標題維持你覺得剛好的 65% */
+            width: 60%;
             height: auto;
             aspect-ratio: 1 / 1;
         }
 
-        /* 3. 紅包網格區：解決切掉的關鍵 */
+        /* 紅包網格區：增加 overflow 防止擠壓 */
         .grid-section {
-            flex: 1; /* 自動填滿剩餘空間 */
+            flex: 1; 
             display: flex; flex-wrap: wrap;
             justify-content: space-evenly; 
-            align-content: flex-start; /* 讓紅包從頂部開始排，確保底部不被擠壓 */
+            align-content: flex-start;
             padding: 0 15px;
+            overflow-y: auto; 
         }
 
         .envelope-box {
             width: 29%; 
-            aspect-ratio: 300 / 540; /* 確保與 Glaxnimate 的 540 高度同步 */
-            margin-bottom: 25px; /* 增加紅包之間的上下間距，視覺更舒服 */
+            aspect-ratio: 300 / 540;
+            margin-bottom: 20px;
             cursor: pointer;
-            overflow: visible; /* 確保動畫超出一點點也不會被切掉 */
         }
+
         .envelope-box lottie-player {
             width: 100%; height: 100%;
+        }
+
+        /* 計時器條 */
+        #timer-display {
+            flex: 0 0 auto;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #fffde7; 
+            border: 2px solid #fbc02d; 
+            margin: 5px 15px 15px 15px; 
+            padding: 10px 15px; 
+            border-radius: 12px;
         }
     </style>
 </head>
@@ -64,35 +78,7 @@
 <div class="app-container">
     <div class="header-section">
         <lottie-player src="GBaCall.lot" speed="1" loop autoplay></lottie-player>
-    </div>
-    
-    <div id="timer-display" style="
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        background: #fffde7; 
-        border: 2px solid #fbc02d; 
-        margin: 10px 15px; 
-        padding: 10px 15px; 
-        border-radius: 12px;
-    ">
-        <div style="color: red; font-weight: bold; font-size: 1rem;">
-            剩餘：<span id="time">10:00</span>
-        </div>
-    
-        <button onclick="manualClose()" style="
-            padding: 6px 12px; 
-            border-radius: 20px; 
-            border: 1px solid #fbc02d; 
-            background: #fff; 
-            color: #d32f2f; 
-            font-size: 0.75rem; 
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        ">
-            核銷離開
-        </button>
-    </div>
+    </div>       
     
     <div class="grid-section">
         <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
@@ -102,21 +88,39 @@
         <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
         <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
     </div>
+
+    <div id="timer-display">
+            <div style="color: red; font-weight: bold; font-size: 1rem;">
+                剩餘：<span id="time">10:00</span>
+            </div>
+        
+            <button onclick="manualClose()" style="
+                padding: 6px 12px; 
+                border-radius: 20px; 
+                border: 1px solid #fbc02d; 
+                background: #fff; 
+                color: #d32f2f; 
+                font-size: 0.75rem; 
+                font-weight: bold;
+            ">
+                核銷離開
+            </button>
+        </div>    
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;    
     tg.ready();
     tg.expand();
-    tg.enableClosingConfirmation(); // 既然要限時，這行一定要加，防止誤關
-    // --- 新增：一進入就開始倒數 ---
-    startCountdown(600);
-    
+    tg.enableClosingConfirmation();
+
+    // 音效
     const openSound = new Audio('press.mp3');
-    openSound.preload = 'auto'; // 告訴瀏覽器先載好音效
+    openSound.preload = 'auto';
     
+    // 參數處理
     const urlParams = new URLSearchParams(window.location.search);
-    const prize = urlParams.get('prize') || 'sorry';
+    const prize = urlParams.get('startapp') || urlParams.get('prize') || 'sorry'; // 支援 startapp 參數
     
     const prizeFiles = {
         '25': '25.lot', '20': '20.lot', '15': '15.lot',
@@ -128,36 +132,42 @@
     });
 
     let hasOpened = false;
+
+    // --- 修正：openPacket 函式補上結束括號 ---
     function openPacket(el) {
         if (hasOpened) return;
         hasOpened = true;
         openSound.play().catch(e => console.log("音效播放失敗:", e));
         const player = el.querySelector('.p-anim');
         player.play();
-        
+    } // <-- 原本少了這一個括號
+
+    function manualClose() {
+        if (confirm("確定已核銷並離開嗎？")) {
+            tg.close();
+        }
+    }
+
     function startCountdown(duration) {
         const display = document.querySelector('#time');
-        const timerBox = document.querySelector('#timer-display');
-        timerBox.style.display = 'flex'; // 一開始就顯示計時器
-    
         let timer = duration, minutes, seconds;
         const interval = setInterval(function () {
             minutes = parseInt(timer / 60, 10);
             seconds = parseInt(timer % 60, 10);
-    
             minutes = minutes < 10 ? "0" + minutes : minutes;
             seconds = seconds < 10 ? "0" + seconds : seconds;
-    
             display.textContent = minutes + ":" + seconds;
-    
+
             if (--timer < 0) {
                 clearInterval(interval);
                 display.textContent = "已失效";
-                alert("驗證時間已過，視窗即將關閉");
                 tg.close();
             }
         }, 1000);
     }
+
+    // 啟動倒數
+    startCountdown(600);
 </script>
 </body>
 </html>
