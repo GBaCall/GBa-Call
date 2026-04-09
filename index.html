@@ -10,18 +10,17 @@
     <style>
         body {
             margin: 0; padding: 0;
-            background-color: #f8f9fa; /* 改回 100% 滿版背景 */
-            height: 100vh; overflow: hidden; font-family: sans-serif;
+            background-color: #f8f9fa;
+            height: 100vh; overflow: hidden; font-family: "Microsoft JhengHei", sans-serif;
             display: flex; flex-direction: column;
         }
 
         .app-container {
-            width: 100%; 
-            height: 100vh;
+            width: 100%; height: 100vh;
             display: flex; flex-direction: column;
         }
 
-        /* 1. 頂部倒數條 (約佔 8%) */
+        /* 1. 頂部倒數條 (8%) */
         #timer-display {
             height: 8vh;
             display: flex; justify-content: space-between; align-items: center; 
@@ -29,18 +28,15 @@
             padding: 0 15px; flex-shrink: 0; box-sizing: border-box;
         }
 
-        /* 2. 標題區 (鎖定 28%) */
+        /* 2. 標題區 (28%) */
         .header-section {
             height: 28vh;
             display: flex; justify-content: center; align-items: center;
-            flex-shrink: 0; overflow: hidden;
+            flex-shrink: 0;
         }
+        .header-section lottie-player { height: 95%; width: auto; }
 
-        .header-section lottie-player {
-            height: 95%; width: auto;
-        }
-
-        /* 3. 跑馬燈區 (鎖定 5%) */
+        /* 3. 單向無限跑馬燈 (5%) */
         .lucky-text-container {
             height: 5vh;
             width: 100%;
@@ -49,47 +45,46 @@
             display: flex; align-items: center;
             flex-shrink: 0;
             border-bottom: 1px dashed #fbc02d;
+            position: relative;
         }
 
         .lucky-text {
-            display: inline-block;
+            position: absolute;
             white-space: nowrap;
-            font-size: 1.1rem;
-            font-weight: bold;
-            /* 霓虹閃爍與左右移動動畫 */
-            animation: marquee 5s ease-in-out infinite alternate, blink 0.8s infinite;
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: #ff3d00;
+            /* 調整閃爍：最暗到 0.5 (50%)，陰影縮小更銳利 */
+            animation: single-marquee 8s linear infinite, sharp-blink 0.8s infinite;
         }
 
-        @keyframes marquee {
-            from { transform: translateX(5%); }
-            to { transform: translateX(55%); }
+        /* 單向循環動畫：從右外側移動到左外側 */
+        @keyframes single-marquee {
+            0% { left: 100%; }
+            100% { left: -100%; }
         }
 
-        @keyframes blink {
-            0%, 100% { color: #ff3d00; text-shadow: 0 0 5px #ffeb3b; }
-            50% { color: #fbc02d; text-shadow: 0 0 10px #ff3d00; }
+        /* 銳利閃爍動畫：透明度最低只到 0.5 */
+        @keyframes sharp-blink {
+            0%, 100% { opacity: 1; text-shadow: 0 0 3px #ffeb3b; }
+            50% { opacity: 0.5; text-shadow: 0 0 5px #ffeb3b; }
         }
 
-        /* 4. 紅包網格區 (鎖定 59%) */
+        /* 4. 紅包網格區 (59%) */
         .grid-section {
             height: 59vh;
             display: flex; flex-wrap: wrap;
             justify-content: space-evenly; 
-            align-content: space-around; /* 均分上下兩排紅包 */
+            align-content: space-around;
             padding: 5px 10px 15px 10px;
             box-sizing: border-box;
-            background: #f8f9fa;
         }
 
         .envelope-box {
-            width: 28%; 
-            height: 46%; /* 兩排分配，留一點餘裕 */
+            width: 28%; height: 46%;
             display: flex; justify-content: center; align-items: center;
         }
-
-        .envelope-box lottie-player {
-            width: 100%; height: 100%;
-        }
+        .envelope-box lottie-player { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
@@ -99,8 +94,8 @@
         <div style="color: red; font-weight: bold; font-size: 0.9rem;">
             剩餘時間：<span id="time">10:00</span>
         </div>
-        <button onclick="manualClose()" style="padding: 5px 12px; border-radius: 20px; border: 1px solid #fbc02d; background: #fff; color: #d32f2f; font-size: 0.75rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            核銷離開
+        <button onclick="manualClose()" style="padding: 5px 12px; border-radius: 20px; border: 1px solid #fbc02d; background: #fff; color: #d32f2f; font-size: 0.75rem; font-weight: bold;">
+            離開
         </button>
     </div>
 
@@ -109,7 +104,7 @@
     </div>    
 
     <div class="lucky-text-container">
-        <div class="lucky-text">祝您好運！中大獎！🧧</div>
+        <div class="lucky-text">🧧 祝您好運！中大獎！ 🧧</div>
     </div>
     
     <div class="grid-section">
@@ -125,7 +120,7 @@
 <script>
     const tg = window.Telegram.WebApp;    
     tg.ready();
-    tg.expand(); // 改回 100% 模式，確保無白塊
+    tg.expand();
     tg.enableClosingConfirmation();
 
     const openSound = new Audio('press.mp3');
