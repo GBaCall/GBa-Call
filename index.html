@@ -65,7 +65,35 @@
     <div class="header-section">
         <lottie-player src="GBaCall.lot" speed="1" loop autoplay></lottie-player>
     </div>
-
+    
+    <div id="timer-display" style="
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        background: #fffde7; 
+        border: 2px solid #fbc02d; 
+        margin: 10px 15px; 
+        padding: 10px 15px; 
+        border-radius: 12px;
+    ">
+        <div style="color: red; font-weight: bold; font-size: 1rem;">
+            剩餘：<span id="time">10:00</span>
+        </div>
+    
+        <button onclick="manualClose()" style="
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            border: 1px solid #fbc02d; 
+            background: #fff; 
+            color: #d32f2f; 
+            font-size: 0.75rem; 
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        ">
+            核銷離開
+        </button>
+    </div>
+    
     <div class="grid-section">
         <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
         <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
@@ -77,11 +105,16 @@
 </div>
 
 <script>
-    const tg = window.Telegram.WebApp;
+    const tg = window.Telegram.WebApp;    
+    tg.ready();
+    tg.expand();
+    tg.enableClosingConfirmation(); // 既然要限時，這行一定要加，防止誤關
+    // --- 新增：一進入就開始倒數 ---
+    startCountdown(600);
+    
     const openSound = new Audio('press.mp3');
     openSound.preload = 'auto'; // 告訴瀏覽器先載好音效
-    tg.ready();
-
+    
     const urlParams = new URLSearchParams(window.location.search);
     const prize = urlParams.get('prize') || 'sorry';
     
@@ -102,8 +135,28 @@
         const player = el.querySelector('.p-anim');
         player.play();
         
-        // 播完後自動關閉，時間可根據你的動畫長度微調
-        setTimeout(() => { tg.close(); }, 3500);
+    function startCountdown(duration) {
+        const display = document.querySelector('#time');
+        const timerBox = document.querySelector('#timer-display');
+        timerBox.style.display = 'flex'; // 一開始就顯示計時器
+    
+        let timer = duration, minutes, seconds;
+        const interval = setInterval(function () {
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
+    
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+    
+            display.textContent = minutes + ":" + seconds;
+    
+            if (--timer < 0) {
+                clearInterval(interval);
+                display.textContent = "已失效";
+                alert("驗證時間已過，視窗即將關閉");
+                tg.close();
+            }
+        }, 1000);
     }
 </script>
 </body>
