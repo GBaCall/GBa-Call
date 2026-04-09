@@ -10,7 +10,8 @@
     <style>
         body {
             margin: 0; padding: 0;
-            background: transparent; /* 讓背景透明才能看到 Telegram */
+            /* 這裡最關鍵：背景設為 transparent，並移除任何可能產生的白色 */
+            background: transparent !important;
             height: 100vh; overflow: hidden; font-family: sans-serif;
             display: flex; flex-direction: column; justify-content: flex-end;
         }
@@ -22,6 +23,8 @@
             border-radius: 24px 24px 0 0;
             display: flex; flex-direction: column;
             overflow: hidden; /* 禁止整頁滑動 */
+            /* 加入陰影，增加「浮在聊天室上面」的立體感 */
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
         }
 
         /* 1. 頂部倒數條：固定高度 */
