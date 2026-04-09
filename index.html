@@ -12,73 +12,93 @@
             margin: 0; padding: 0;
             background-color: rgba(0, 0, 0, 0.6);
             display: flex; flex-direction: column;
-            /* 改為 center，防止內容被推到底部消失 */
-            justify-content: center; 
+            /* 讓內容貼在最下面，達成 80% 彈出感 */
+            justify-content: flex-end; 
             height: 100vh; overflow: hidden; font-family: sans-serif;
         }
 
         .app-container {
             width: 100%; 
-            height: 100vh; /* 佔滿全螢幕 */
+            height: 80vh; /* 嚴格限制 80% 高度 */
             background-color: #f8f9fa;
             border-radius: 24px 24px 0 0;
             display: flex; flex-direction: column;
             box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
 
-        .header-section {
-            flex: 0 0 auto;
-            display: flex; justify-content: center; align-items: center;
-            padding: 20px 0 5px 0; 
-        }
-
-        .header-section lottie-player {
-            width: 60%;
-            height: auto;
-            aspect-ratio: 1 / 1;
-        }
-
-        /* 紅包網格區：增加 overflow 防止擠壓 */
-        .grid-section {
-            flex: 1; 
-            display: flex; flex-wrap: wrap;
-            justify-content: space-evenly; 
-            align-content: flex-start;
-            padding: 0 15px;
-            overflow-y: auto; 
-        }
-
-        .envelope-box {
-            width: 29%; 
-            aspect-ratio: 300 / 540;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-
-        .envelope-box lottie-player {
-            width: 100%; height: 100%;
-        }
-
-        /* 計時器條 */
+        /* 1. 頂部計時器：作為標題欄 */
         #timer-display {
             flex: 0 0 auto;
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             background: #fffde7; 
-            border: 2px solid #fbc02d; 
-            margin: 5px 15px 15px 15px; 
-            padding: 10px 15px; 
-            border-radius: 12px;
+            border-bottom: 2px solid #fbc02d; 
+            padding: 12px 15px;
+            z-index: 10;
+        }
+
+        /* 2. 標題區：縮小一點，避免垂直空間不足 */
+        .header-section {
+            flex: 0 0 auto;
+            display: flex; justify-content: center; align-items: center;
+            padding: 10px 0 5px 0; 
+        }
+
+        .header-section lottie-player {
+            width: 55%; /* 稍微縮小標題比例 */
+            height: auto;
+            aspect-ratio: 1 / 1;
+        }
+
+        /* 3. 紅包網格區：佔滿剩餘空間並可滾動 */
+        .grid-section {
+            flex: 1; 
+            display: flex; flex-wrap: wrap;
+            justify-content: space-evenly; 
+            align-content: flex-start;
+            padding: 5px 15px 20px 15px;
+            overflow-y: auto; /* 若螢幕太小可滾動 */
+        }
+
+        .envelope-box {
+            width: 29%; 
+            aspect-ratio: 300 / 540;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        .envelope-box lottie-player {
+            width: 100%; height: 100%;
         }
     </style>
 </head>
 <body>
 
 <div class="app-container">
+    <div id="timer-display">
+        <div style="color: red; font-weight: bold; font-size: 0.95rem;">
+            剩餘時間：<span id="time">10:00</span>
+        </div>
+    
+        <button onclick="manualClose()" style="
+            padding: 5px 12px; 
+            border-radius: 20px; 
+            border: 1px solid #fbc02d; 
+            background: #fff; 
+            color: #d32f2f; 
+            font-size: 0.75rem; 
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        ">
+            核銷離開
+        </button>
+    </div>
+
     <div class="header-section">
         <lottie-player src="GBaCall.lot" speed="1" loop autoplay></lottie-player>
-    </div>       
+    </div>    
     
     <div class="grid-section">
         <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
@@ -88,24 +108,6 @@
         <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
         <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
     </div>
-
-    <div id="timer-display">
-            <div style="color: red; font-weight: bold; font-size: 1rem;">
-                剩餘：<span id="time">10:00</span>
-            </div>
-        
-            <button onclick="manualClose()" style="
-                padding: 6px 12px; 
-                border-radius: 20px; 
-                border: 1px solid #fbc02d; 
-                background: #fff; 
-                color: #d32f2f; 
-                font-size: 0.75rem; 
-                font-weight: bold;
-            ">
-                核銷離開
-            </button>
-        </div>    
 </div>
 
 <script>
@@ -120,7 +122,7 @@
     
     // 參數處理
     const urlParams = new URLSearchParams(window.location.search);
-    const prize = urlParams.get('startapp') || urlParams.get('prize') || 'sorry'; // 支援 startapp 參數
+    const prize = urlParams.get('startapp') || urlParams.get('prize') || 'sorry'; 
     
     const prizeFiles = {
         '25': '25.lot', '20': '20.lot', '15': '15.lot',
@@ -133,14 +135,13 @@
 
     let hasOpened = false;
 
-    // --- 修正：openPacket 函式補上結束括號 ---
     function openPacket(el) {
         if (hasOpened) return;
         hasOpened = true;
         openSound.play().catch(e => console.log("音效播放失敗:", e));
         const player = el.querySelector('.p-anim');
         player.play();
-    } // <-- 原本少了這一個括號
+    }
 
     function manualClose() {
         if (confirm("確定已核銷並離開嗎？")) {
