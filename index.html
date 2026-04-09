@@ -10,55 +10,80 @@
     <style>
         body {
             margin: 0; padding: 0;
-            /* 這裡最關鍵：背景設為 transparent，並移除任何可能產生的白色 */
-            background: transparent !important;
+            background-color: #f8f9fa; /* 改回 100% 滿版背景 */
             height: 100vh; overflow: hidden; font-family: sans-serif;
-            display: flex; flex-direction: column; justify-content: flex-end;
+            display: flex; flex-direction: column;
         }
 
         .app-container {
             width: 100%; 
-            height: 80vh; /* 鎖定 80% 高度 */
-            background-color: #f8f9fa;
-            border-radius: 24px 24px 0 0;
+            height: 100vh;
             display: flex; flex-direction: column;
-            overflow: hidden; /* 禁止整頁滑動 */
-            /* 加入陰影，增加「浮在聊天室上面」的立體感 */
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
         }
 
-        /* 1. 頂部倒數條：固定高度 */
+        /* 1. 頂部倒數條 (約佔 8%) */
         #timer-display {
-            height: 8vh; /* 佔總高度的 8% */
+            height: 8vh;
             display: flex; justify-content: space-between; align-items: center; 
             background: #fffde7; border-bottom: 2px solid #fbc02d; 
-            padding: 0 20px; flex-shrink: 0;
+            padding: 0 15px; flex-shrink: 0; box-sizing: border-box;
         }
 
-        /* 2. 標題區：固定高度 */
+        /* 2. 標題區 (鎖定 28%) */
         .header-section {
-            height: 22vh; /* 佔總高度的 22% */
+            height: 28vh;
             display: flex; justify-content: center; align-items: center;
-            flex-shrink: 0;
+            flex-shrink: 0; overflow: hidden;
         }
 
         .header-section lottie-player {
-            height: 90%; width: auto; /* 以高度為基準縮放 */
+            height: 95%; width: auto;
         }
 
-        /* 3. 紅包網格區：自動計算剩餘高度 */
+        /* 3. 跑馬燈區 (鎖定 5%) */
+        .lucky-text-container {
+            height: 5vh;
+            width: 100%;
+            overflow: hidden;
+            background: #fff;
+            display: flex; align-items: center;
+            flex-shrink: 0;
+            border-bottom: 1px dashed #fbc02d;
+        }
+
+        .lucky-text {
+            display: inline-block;
+            white-space: nowrap;
+            font-size: 1.1rem;
+            font-weight: bold;
+            /* 霓虹閃爍與左右移動動畫 */
+            animation: marquee 5s ease-in-out infinite alternate, blink 0.8s infinite;
+        }
+
+        @keyframes marquee {
+            from { transform: translateX(5%); }
+            to { transform: translateX(55%); }
+        }
+
+        @keyframes blink {
+            0%, 100% { color: #ff3d00; text-shadow: 0 0 5px #ffeb3b; }
+            50% { color: #fbc02d; text-shadow: 0 0 10px #ff3d00; }
+        }
+
+        /* 4. 紅包網格區 (鎖定 59%) */
         .grid-section {
-            height: 50vh; /* 佔總高度的 50% (8+22+50=80) */
+            height: 59vh;
             display: flex; flex-wrap: wrap;
             justify-content: space-evenly; 
-            align-content: space-around; /* 讓紅包垂直均分空間 */
-            padding: 5px 10px;
+            align-content: space-around; /* 均分上下兩排紅包 */
+            padding: 5px 10px 15px 10px;
             box-sizing: border-box;
+            background: #f8f9fa;
         }
 
         .envelope-box {
             width: 28%; 
-            height: 45%; /* 兩排紅包，每排佔接近一半的高度 */
+            height: 46%; /* 兩排分配，留一點餘裕 */
             display: flex; justify-content: center; align-items: center;
         }
 
@@ -72,16 +97,20 @@
 <div class="app-container">
     <div id="timer-display">
         <div style="color: red; font-weight: bold; font-size: 0.9rem;">
-            剩餘：<span id="time">10:00</span>
+            剩餘時間：<span id="time">10:00</span>
         </div>
-        <button onclick="manualClose()" style="padding: 5px 12px; border-radius: 20px; border: 1px solid #fbc02d; background: #fff; color: #d32f2f; font-size: 0.75rem; font-weight: bold;">
-            離開
+        <button onclick="manualClose()" style="padding: 5px 12px; border-radius: 20px; border: 1px solid #fbc02d; background: #fff; color: #d32f2f; font-size: 0.75rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            核銷離開
         </button>
     </div>
 
     <div class="header-section">
         <lottie-player src="GBaCall.lot" speed="1" loop autoplay></lottie-player>
     </div>    
+
+    <div class="lucky-text-container">
+        <div class="lucky-text">祝您好運！中大獎！🧧</div>
+    </div>
     
     <div class="grid-section">
         <div class="envelope-box" onclick="openPacket(this)"><lottie-player class="p-anim"></lottie-player></div>
@@ -96,7 +125,7 @@
 <script>
     const tg = window.Telegram.WebApp;    
     tg.ready();
-    // 注意：這裡絕對不能寫 tg.expand(); 否則 20% 會變黑塊
+    tg.expand(); // 改回 100% 模式，確保無白塊
     tg.enableClosingConfirmation();
 
     const openSound = new Audio('press.mp3');
@@ -130,7 +159,11 @@
             let min = parseInt(timer / 60, 10);
             let sec = parseInt(timer % 60, 10);
             display.textContent = (min < 10 ? "0" + min : min) + ":" + (sec < 10 ? "0" + sec : sec);
-            if (--timer < 0) { clearInterval(interval); tg.close(); }
+            if (--timer < 0) { 
+                clearInterval(interval); 
+                display.textContent = "已失效";
+                tg.close(); 
+            }
         }, 1000);
     }
     startCountdown(600);
