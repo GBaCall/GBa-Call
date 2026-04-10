@@ -36,22 +36,31 @@
             flex-shrink: 0; border-bottom: 1px dashed #fbc02d; position: relative;
         }
 
-        /* START 按鈕樣式 */
-        #start-btn {
-            background: #ff3d00; color: white; border: none; padding: 2px 30px;
-            font-size: 1.2rem; font-weight: 900; border-radius: 15px; cursor: pointer;
-            animation: pulse 1s infinite; z-index: 10;
+        /* 按鈕基礎樣式 */
+        .status-btn {
+            border: none; padding: 2px 30px;
+            font-size: 1.1rem; font-weight: 900; border-radius: 15px; cursor: pointer;
+            z-index: 10;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        /* START 狀態 */
+        #start-btn {
+            background: #ff3d00; color: white;
+            animation: pulse 1s infinite;
         }
+
+        /* 已玩過 狀態 (不能點擊的視覺感，但代碼上我們直接攔截功能) */
+        #played-label {
+            display: none;
+            background: #9e9e9e; color: #eeeeee;
+            cursor: default;
+        }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
         .lucky-text {
             position: absolute; white-space: nowrap; font-size: 1.2rem;
-            font-weight: 900; color: #ff3d00; display: none; /* 初始隱藏 */
+            font-weight: 900; color: #ff3d00; display: none;
             animation: single-marquee 8s linear infinite, sharp-blink 0.8s infinite;
         }
 
@@ -71,7 +80,7 @@
         .envelope-box { width: 28%; height: 46%; display: flex; justify-content: center; align-items: center; }
         .envelope-box lottie-player { width: 100%; height: 100%; }
         
-        /* 離開按鈕初始隱藏 */
+        /* 離開按鈕：初始在「已玩過」情況下會顯示 */
         #manual-exit { display: none; }
     </style>
 </head>
@@ -82,7 +91,7 @@
         <div style="color: red; font-weight: bold; font-size: 0.9rem;">
             剩餘時間：<span id="time">00:10</span>
         </div>
-        <button id="manual-exit" onclick="manualClose()" style="padding: 5px 12px; border-radius: 20px; border: 1px solid #fbc02d; background: #fff; color: #d32f2f; font-size: 0.75rem; font-weight: bold;">
+        <button id="manual-exit" onclick="tg.close()" style="padding: 5px 12px; border-radius: 20px; border: 1px solid #fbc02d; background: #fff; color: #d32f2f; font-size: 0.75rem; font-weight: bold;">
             離開
         </button>
     </div>
@@ -92,7 +101,9 @@
     </div>    
 
     <div class="control-zone">
-        <button id="start-btn" onclick="startGame()">START</button>
+        <button id="start-btn" class="status-btn" onclick="startGame()">START</button>
+        <button id="played-label" class="status-btn">您已玩過遊戲</button>
+        
         <div id="marquee-text" class="lucky-text">🧧 請選一個！祝您好運！ 🧧</div>
     </div>
     
@@ -110,71 +121,69 @@
     const tg = window.Telegram.WebApp;    
     tg.ready();
     tg.expand();
-    tg.enableClosingConfirmation();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const prize = urlParams.get('startapp') || urlParams.get('prize') || 'sorry'; 
+    
+    // --- 【鎖死機制】檢查是否玩過 ---
+    const storageKey = "played_v2_" + prize; 
+    const isPlayed = localStorage.getItem(storageKey);
+
+    if (isPlayed) {
+        // 如果玩過了：顯示「已玩過」按鈕，顯示「離開」按鈕，隱藏 START
+        document.getElementById('start-btn').style.display = 'none';
+        document.getElementById('played-label').style.display = 'block';
+        document.getElementById('manual-exit').style.display = 'block';
+    }
 
     const openSound = new Audio('press.mp3');
     openSound.preload = 'auto';
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const prize = urlParams.get('startapp') || urlParams.get('prize') || 'sorry'; 
     const prizeFiles = { '25':'25.lot', '20':'20.lot', '15':'15.lot', '10':'10.lot', '5':'5.lot', 'sorry':'sorry.lot' };
 
     let hasOpened = false;
     let gameStarted = false;
 
-    // 預載 Lottie 資源但不播放
     document.querySelectorAll('.p-anim').forEach(player => {
         player.load(prizeFiles[prize]);
     });
 
-    // 啟動遊戲
     function startGame() {
-        if (gameStarted) return;
+        if (gameStarted || isPlayed) return; // 玩過就不能點
         gameStarted = true;
 
-        // 1. 發送數據給 Bot (觸發刪除按鈕)
-        tg.sendData("process_started");
+        // 存入記憶，下次進來就鎖死
+        localStorage.setItem(storageKey, "true");
 
-        // 2. 切換 UI 狀態
         document.getElementById('start-btn').style.display = 'none';
         document.getElementById('marquee-text').style.display = 'block';
         document.getElementById('manual-exit').style.display = 'block';
-
-        // 3. 開始 10 秒倒數
         runCountdown(10);
     }
 
     function openPacket(el) {
-        if (!gameStarted || hasOpened) return; // 沒點 START 或已開啟則無效
+        if (!gameStarted || hasOpened) return;
         hasOpened = true;
         openSound.play().catch(e => console.log(e));
         const player = el.querySelector('.p-anim');
         player.play();
     }
 
-    function manualClose() {
-        if (confirm("確定要離開嗎？")) { tg.close(); }
-    }
-
     function runCountdown(duration) {
         const display = document.querySelector('#time');
         let timer = duration;
         const interval = setInterval(function () {
-            let min = parseInt(timer / 60, 10);
             let sec = parseInt(timer % 60, 10);
-            display.textContent = (min < 10 ? "0" + min : min) + ":" + (sec < 10 ? "0" + sec : sec);
+            display.textContent = "00:" + (sec < 10 ? "0" + sec : sec);
             
             if (--timer < 0) { 
                 clearInterval(interval);
                 if (!hasOpened) {
-                    // 強迫開獎：隨機挑選一個紅包
                     const boxes = document.querySelectorAll('.envelope-box');
                     const randomIdx = Math.floor(Math.random() * boxes.length);
                     openPacket(boxes[randomIdx]);
                 }
                 display.textContent = "已結束";
-                // 3秒後自動關閉(選配，可讓客人看清楚抽到什麼)
-                setTimeout(() => { tg.close(); }, 3000);
+                setTimeout(() => { tg.close(); }, 4000);
             }
         }, 1000);
     }
