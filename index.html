@@ -117,16 +117,19 @@
     tg.ready();
     tg.expand();
 
-    // 取得本次消費專屬代碼
+    // 1. 抓取參數
     const urlParams = new URLSearchParams(window.location.search);
-    const prize = urlParams.get('startapp') || urlParams.get('prize') || 'sorry'; 
+    // 拿到的是整串 unique_code (例如 "25_1712736000")
+    const rawCode = tg.initDataUnsafe.start_param || urlParams.get('startapp') || 'sorry_0'; 
     
-    // 【核心鎖定】針對每一組 prize 代碼建立獨立記憶
-    const storageKey = "played_v3_" + prize; 
+    // 2. 拆解：prize 用來選 Lottie，storageKey 用來鎖定
+    const prize = rawCode.split('_')[0]; 
+    const storageKey = "played_v6_" + rawCode; // 加個 v6 區隔舊紀錄
+    
     const isPlayed = localStorage.getItem(storageKey);
 
-    // 初始檢查：如果這組代碼玩過，直接切換到「已玩過」狀態
-    if (isPlayed && prize !== 'sorry') {
+    // 3. 初始鎖定檢查
+    if (isPlayed) {
         document.getElementById('start-btn').style.display = 'none';
         document.getElementById('played-label').style.display = 'block';
         document.getElementById('manual-exit').style.display = 'block';
@@ -139,16 +142,17 @@
     let hasOpened = false;
     let gameStarted = false;
 
+    // 4. 根據拆解後的 prize 載入動畫
     document.querySelectorAll('.p-anim').forEach(player => {
-        player.load(prizeFiles[prize]);
+        player.load(prizeFiles[prize] || prizeFiles['sorry']);
     });
 
     function startGame() {
-        // 防止重複點擊或已玩過者點擊
-        if (gameStarted || (localStorage.getItem(storageKey) && prize !== 'sorry')) return;
+        // 防止重複點擊或已鎖定者點擊
+        if (gameStarted || localStorage.getItem(storageKey)) return;
         
         gameStarted = true;
-        // 點擊 START 即刻鎖定此代碼
+        // 5. 點擊 START 即刻鎖定此唯一代碼
         localStorage.setItem(storageKey, "true");
 
         document.getElementById('start-btn').style.display = 'none';
