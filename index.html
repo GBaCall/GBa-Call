@@ -17,7 +17,7 @@
 
         .app-container { width: 100%; height: 100vh; display: flex; flex-direction: column; }
 
-        /* 1. 頂部狀態條 */
+        /* 頂部狀態條 */
         #timer-display {
             height: 8vh;
             display: flex; justify-content: space-between; align-items: center; 
@@ -25,31 +25,28 @@
             padding: 0 15px; flex-shrink: 0; box-sizing: border-box;
         }
 
-        /* 2. 標題區 */
+        /* 標題區 */
         .header-section { height: 28vh; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
         .header-section lottie-player { height: 95%; width: auto; }
 
-        /* 3. 中間控制區 / 跑馬燈 */
+        /* 中間控制區 / 跑馬燈 */
         .control-zone {
             height: 5vh; width: 100%; overflow: hidden; background: #fff;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0; border-bottom: 1px dashed #fbc02d; position: relative;
         }
 
-        /* 按鈕基礎樣式 */
         .status-btn {
             border: none; padding: 2px 30px;
             font-size: 1.1rem; font-weight: 900; border-radius: 15px; cursor: pointer;
             z-index: 10;
         }
 
-        /* START 狀態 */
         #start-btn {
             background: #ff3d00; color: white;
             animation: pulse 1s infinite;
         }
 
-        /* 已玩過 狀態 (不能點擊的視覺感，但代碼上我們直接攔截功能) */
         #played-label {
             display: none;
             background: #9e9e9e; color: #eeeeee;
@@ -70,7 +67,7 @@
             50% { opacity: 0.5; text-shadow: 0 0 5px #ffeb3b; }
         }
 
-        /* 4. 紅包網格區 */
+        /* 紅包網格區 */
         .grid-section {
             height: 59vh; display: flex; flex-wrap: wrap;
             justify-content: space-evenly; align-content: space-around;
@@ -80,7 +77,6 @@
         .envelope-box { width: 28%; height: 46%; display: flex; justify-content: center; align-items: center; }
         .envelope-box lottie-player { width: 100%; height: 100%; }
         
-        /* 離開按鈕：初始在「已玩過」情況下會顯示 */
         #manual-exit { display: none; }
     </style>
 </head>
@@ -103,7 +99,6 @@
     <div class="control-zone">
         <button id="start-btn" class="status-btn" onclick="startGame()">START</button>
         <button id="played-label" class="status-btn">您已玩過遊戲</button>
-        
         <div id="marquee-text" class="lucky-text">🧧 請選一個！祝您好運！ 🧧</div>
     </div>
     
@@ -122,15 +117,16 @@
     tg.ready();
     tg.expand();
 
+    // 取得本次消費專屬代碼
     const urlParams = new URLSearchParams(window.location.search);
     const prize = urlParams.get('startapp') || urlParams.get('prize') || 'sorry'; 
     
-    // --- 【鎖死機制】檢查是否玩過 ---
-    const storageKey = "played_v2_" + prize; 
+    // 【核心鎖定】針對每一組 prize 代碼建立獨立記憶
+    const storageKey = "played_v3_" + prize; 
     const isPlayed = localStorage.getItem(storageKey);
 
-    if (isPlayed) {
-        // 如果玩過了：顯示「已玩過」按鈕，顯示「離開」按鈕，隱藏 START
+    // 初始檢查：如果這組代碼玩過，直接切換到「已玩過」狀態
+    if (isPlayed && prize !== 'sorry') {
         document.getElementById('start-btn').style.display = 'none';
         document.getElementById('played-label').style.display = 'block';
         document.getElementById('manual-exit').style.display = 'block';
@@ -148,10 +144,11 @@
     });
 
     function startGame() {
-        if (gameStarted || isPlayed) return; // 玩過就不能點
+        // 防止重複點擊或已玩過者點擊
+        if (gameStarted || (localStorage.getItem(storageKey) && prize !== 'sorry')) return;
+        
         gameStarted = true;
-
-        // 存入記憶，下次進來就鎖死
+        // 點擊 START 即刻鎖定此代碼
         localStorage.setItem(storageKey, "true");
 
         document.getElementById('start-btn').style.display = 'none';
